@@ -1,2 +1,2 @@
-# Black-Scholes-Model
- Black-Scholes-Model
+# 📈 Black-Scholes Option Pricing Heatmap (Streamlit App)
+This Streamlit application visualizes European call and put option prices using the Black-Scholes model. Users can input key parameters, including strike price, time to expiration, risk-free rate, underlying asset price range, and volatility range. The app generates heatmaps showing predicted call and put option prices, with spot price and volatility as the axes.
