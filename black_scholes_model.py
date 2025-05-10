@@ -8,17 +8,13 @@ Created on Fri Apr 11 14:12:14 2025
 
 import math
 from scipy.stats import norm
-#import streamlit as st
+import streamlit as st
 import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 
-# S = 42 #Underlying Price
-# K = 40 #Strike Price
-# T = 0.5 #Time to Expiration
-# r = 0.1 #Risk-Free Rate
-# vol = 0.2 #Volatility(s.d.)
+#Defining Black Scholes Model function
 
 def black_scholes_model(S,K,T,r,vol):
     d1 = (math.log(S/K) + (r + 0.5 * vol **2)*T)/(vol*math.sqrt(T))
@@ -30,36 +26,52 @@ def black_scholes_model(S,K,T,r,vol):
 
     return(S,vol,C,P)
 
-    # print('The value of d1 is: ', round(d1,4))
-    # print('The value of d2 is: ', round(d2,4))
-    # print('The price of the call option is: ', round(C,2))
-    # print('The price of the put option is: ', round(P,2))
 
-#black_scholes_model(42,40,0.5,0.1,0.2)
+# Creating Streamlit website
 
-model = []
 
-def black_scholes_model_heatmap(S_min, S_max, K, T, r, vol_min, vol_max):
+st.title('Predicting Call and Put Price Using Black Scholes Model') #Title
+K = st.sidebar.number_input('Strike Price') # Strike Price Input
+T = st.sidebar.number_input('Time to Expiration in Years') # Time value input
+r = st.sidebar.number_input('Risk-Free Rate') # Risk free rate input
+S_max = st.sidebar.slider('Max Underlying Price', 0, 100, 1) # Slider for maximum underlying price
+S_min = st.sidebar.slider('Min Underlying Price', 0,100, 1) # Slider for minimum underlying price
+vol_max = st.sidebar.slider('Max Volatility', 0.0 , 1.0, 0.01) # Slider for maximum volatility
+vol_min = st.sidebar.slider('Min Volatility', 0.0 , 1.0, 0.01) # Slider for minimum volatility
+
+
+#Setting conditions
+if S_max == S_min:
+    st.error("Max Spot Price must be greater than Min Spot Price")
+elif vol_max == vol_min:
+    st.error("Max Volatility must be greater than Min Volatility")
+#If S_step is not equal to 0, call Black Scholes model function
+else:
     S_step = (S_max - S_min)/10
-    df_S = np.arange(S_min, (S_max + S_step), S_step)
     vol_step = (vol_max - vol_min)/10
-    df_vol = np.arange(vol_min, (vol_max + vol_step), vol_step)
+    df_S = np.arange(S_min, S_max + S_step, S_step)
+    df_vol = np.arange(vol_min, vol_max + vol_step, vol_step)
+    model = []
     for i in df_S:
         for j in df_vol:
-            k = black_scholes_model(i,K,T,r,j)
-            model.append(k)
-    model_2 = pd.DataFrame(model).round(3)
-    C_dataframe = model_2.pivot(index = 0, columns = 1, values = 2)
-    plt.figure(0)
-    sns.heatmap(C_dataframe, annot = True, fmt=".1f", cmap = 'CMRmap_r')
-    plt.xlabel('Spot Price') # x-axis label with fontsize 15
-    plt.ylabel('Volatility') # y-axis label with fontsize 15
-    plt.title('Black Scholes Model Call Price Based on Spot Price & Volatility')
-    # plt.show(0)
+            model.append(black_scholes_model(i, K, T, r, j))
 
+    model_2 = pd.DataFrame(model).round(3)
+    col1, col2 = st.columns(2)
+    C_dataframe = model_2.pivot(index = 0, columns = 1, values = 2)
     P_dataframe = model_2.pivot(index = 0, columns = 1, values = 3)
-    plt.figure(1)
-    sns.heatmap(P_dataframe, annot = True, fmt=".1f", cmap = 'CMRmap_r')
-    plt.xlabel('Spot Price') # x-axis label with fontsize 15
-    plt.ylabel('Volatility') # y-axis label with fontsize 15
-    plt.title('Black Scholes Model Put Price Based on Spot Price & Volatility')
+
+# Plotting heatmap on streamlit
+    st.subheader("Call Option Prices Heatmap")
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(C_dataframe, annot=True, fmt=".2f", cmap='YlOrBr')
+    plt.xlabel("Volatility")
+    plt.ylabel("Spot Price")
+    st.pyplot(plt.gcf())
+
+    st.subheader("Put Option Prices Heatmap")
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(P_dataframe, annot=True, fmt=".2f", cmap='YlOrBr')
+    plt.xlabel("Volatility")
+    plt.ylabel("Spot Price")
+    st.pyplot(plt.gcf())
